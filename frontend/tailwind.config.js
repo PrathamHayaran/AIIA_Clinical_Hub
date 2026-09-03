@@ -1,0 +1,54 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        sage: {
+          50: '#f4f8f6',
+          100: '#e4ede9',
+          200: '#c8dcce',
+          300: '#a3c5b3',
+          400: '#7fa995',
+          500: '#608c7d',
+          600: '#4e7c6e',
+          700: '#3e6358',
+          800: '#345047',
+          900: '#2b423b',
+          950: '#172722',
+        },
+        peach: {
+          50: '#fef6f4',
+          100: '#fdede8',
+          200: '#fed7cd',
+          300: '#fbb7a5',
+          400: '#f8947b',
+          500: '#f4a28c',
+          600: '#e26b4e',
+          700: '#bf5034',
+          800: '#9d442e',
+          900: '#803c2b',
+        },
+        canvas: '#edf2ef',
+      },
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['"Outfit"', '"Plus Jakarta Sans"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
+      boxShadow: {
+        'soft-lg': '0 12px 32px -4px rgba(30, 41, 59, 0.05), 0 4px 12px -2px rgba(30, 41, 59, 0.02)',
+        'soft-xl': '0 20px 40px -8px rgba(30, 41, 59, 0.08), 0 8px 16px -4px rgba(30, 41, 59, 0.03)',
+        'peach-glow': '0 10px 25px -5px rgba(244, 162, 140, 0.4)',
+        'sage-glow': '0 10px 25px -5px rgba(96, 140, 125, 0.3)',
+      },
+      borderRadius: {
+        '2xl': '18px',
+        '3xl': '26px',
+        '4xl': '34px',
+      },
+    },
+  },
+  plugins: [],
+};

@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#edf2ef] text-[#1e293b] min-h-screen antialiased selection:bg-[#f4a28c] selection:text-white;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: #edf2ef;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight text-[#1e293b];
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+}
+
+/* Organic Soft Shadows & Glass Cards */
+.organic-card {
+  background-color: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 10px 30px -4px rgba(30, 41, 59, 0.04), 0 2px 6px -1px rgba(30, 41, 59, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.organic-card-interactive {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.organic-card-interactive:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 20px 40px -10px rgba(96, 140, 125, 0.15);
+}
+
+/* 3D Floating & Pulse Keyframes */
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+}
+
+@keyframes pulseAura {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes botanicalBreathe {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(96, 140, 125, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(244, 162, 140, 0.4));
+  }
+}
+
+@keyframes herbSway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes herbSwayDelayed {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-3.5deg);
+  }
+}
+
+@keyframes herbPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+.animate-herb-sway {
+  transform-origin: top center;
+  animation: herbSway 4.5s ease-in-out infinite;
+}
+
+.animate-herb-sway-delayed {
+  transform-origin: top center;
+  animation: herbSwayDelayed 5.5s ease-in-out infinite 1s;
+}
+
+.animate-herb-sway-slow {
+  transform-origin: top center;
+  animation: herbSway 7s ease-in-out infinite;
+}
+
+.animate-herb-pulse {
+  transform-origin: center;
+  animation: herbPulse 4s ease-in-out infinite;
+}
+
+.animate-herb-pulse-delayed {
+  transform-origin: center;
+  animation: herbPulse 5s ease-in-out infinite 1.5s;
+}
+
+.animate-float-gentle {
+  animation: floatGentle 4s ease-in-out infinite;
+}
+
+.animate-pulse-aura {
+  animation: pulseAura 3s ease-in-out infinite;
+}
+
+.animate-botanical-breathe {
+  animation: botanicalBreathe 5s ease-in-out infinite;
+}
+
+/* Custom Minimalist Sage Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(96, 140, 125, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(96, 140, 125, 0.5);
+}
+
