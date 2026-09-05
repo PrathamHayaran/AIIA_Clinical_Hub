@@ -8,5 +8,6 @@ router.post('/login', authLimiter, authController.login);
 router.post('/register', authController.register);
 router.post('/quick-demo', authController.quickDemoLogin);
 router.get('/me', authMiddleware, authController.getMe);
+router.put('/profile', authMiddleware, authController.updateProfile);
 
 module.exports = router;

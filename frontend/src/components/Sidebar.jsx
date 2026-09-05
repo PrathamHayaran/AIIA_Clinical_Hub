@@ -53,7 +53,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
     { label: 'Research Centers', icon: Building2, path: '/sites' },
     { label: 'Safety & PV', icon: Activity, path: '/safety', badge: 'PV' },
     { label: 'Compliance & IEC', icon: ShieldCheck, path: '/compliance' },
-    { label: 'AI Copilot', icon: Sparkles, path: '/ai-copilot', badge: 'AI', isAi: true },
+    { label: 'Nadi AI', icon: Sparkles, path: '/ai-copilot', badge: 'PULSE AI', isAi: true },
     { label: 'Analytics', icon: BarChart2, path: '/analytics' },
     { label: 'Alert Engine', icon: Compass, path: '/alerts', badge: liveAlerts.length > 0 ? `${liveAlerts.length}` : 'LIVE' },
     { label: 'Preferences', icon: Sliders, path: '/settings' },

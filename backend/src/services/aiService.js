@@ -9,26 +9,178 @@ const { generatePrioritizedActionItems } = require('./actionCenterService');
 class AIService {
   constructor() {
     this.apiKey = process.env.AI_API_KEY || '';
-    this.model = process.env.AI_MODEL || 'gemini-1.5-pro';
+    this.model = process.env.AI_MODEL || 'gemini-3.7-flash';
   }
 
   /**
-   * Main query processor for AIIA Research Copilot.
+   * Set API key dynamically
+   */
+  setApiKey(key) {
+    this.apiKey = key ? key.trim() : '';
+  }
+
+  /**
+   * Set Gemini Model dynamically
+   */
+  setModel(model) {
+    this.model = model ? model.trim() : 'gemini-3.7-flash';
+  }
+
+  /**
+   * Get Current AI Configuration & Live Status
+   */
+  getApiStatus() {
+    return {
+      hasKey: !!(this.apiKey && this.apiKey.trim() !== ''),
+      maskedKey: this.apiKey ? `${this.apiKey.slice(0, 6)}...${this.apiKey.slice(-4)}` : null,
+      model: this.model || 'gemini-3.7-flash',
+      mode: (this.apiKey && this.apiKey.trim() !== '') ? 'GEMINI_LIVE' : 'HEURISTIC_LOCAL',
+    };
+  }
+
+  /**
+   * Main query processor for Nadi AI (Real-Time Clinical Pulse & Intelligence Engine).
    * @param {string} prompt - User query
    * @param {object} contextData - Backend curated, de-identified telemetry
    */
   async processCopilotQuery(prompt, contextData = {}) {
-    // If external LLM API key is present and configured, call external model
+    // If external Gemini API key is present, execute live LLM reasoning
     if (this.apiKey && this.apiKey.trim() !== '') {
       try {
         return await this.callExternalLLM(prompt, contextData);
       } catch (err) {
-        console.warn('⚠️ External LLM call failed, falling back to intelligent heuristic clinical engine:', err.message);
+        console.warn('⚠️ Gemini LLM call failed, falling back to intelligent heuristic clinical engine:', err.message);
       }
     }
 
     // High-intelligence clinical reasoning heuristic engine fallback
     return this.generateHeuristicResponse(prompt, contextData);
+  }
+
+  /**
+   * Live Google Gemini AI Calling Method with GCP & Ayurvedic Domain Prompting
+   */
+  async callExternalLLM(prompt, contextData = {}) {
+    const { trials = [], sites = [], safetyEvents = [], alerts = [] } = contextData;
+
+    // Compact de-identified clinical telemetry snapshot
+    const portfolioSummary = {
+      totalTrials: trials.length,
+      highRiskTrials: trials.filter(t => (t.riskScore || 0) >= 60).map(t => ({
+        trialId: t.trialId,
+        title: t.title,
+        treatment: t.treatment,
+        phase: t.phase,
+        status: t.status,
+        enrolled: `${t.currentEnrolled}/${t.targetParticipants}`,
+        riskScore: t.riskScore,
+        riskCategory: t.riskCategory,
+        healthScore: t.healthScore,
+      })),
+      activeSafetyEvents: safetyEvents.filter(e => e.status !== 'Resolved').map(e => ({
+        trialId: e.trialId,
+        adverseEvent: e.adverseEvent || e.eventType,
+        severity: e.severity,
+        status: e.status,
+      })),
+      sitePerformance: sites.map(s => ({
+        name: s.name,
+        city: s.city,
+        performanceScore: s.performanceScore,
+      })),
+    };
+
+    const systemInstruction = `You are Nadi AI (named after Nadi Pariksha — the Ayurvedic science of real-time clinical pulse sensing, physiological vitality, and diagnostic wisdom). You serve as the senior AI Clinical Trial Intelligence & Decision Support Engine for the All India Institute of Ayurveda (AIIA) and Ministry of Ayush, Government of India.
+
+You operate with deep mastery over:
+1. Classical Ayurvedic Pharmacology & Formulations (Charaka Samhita, Sushruta Samhita, Ashtanga Hridaya, Dravyaguna, Rasashastra, Panchakarma, Prakriti dosha phenotyping).
+2. Modern Clinical Trial Regulatory Compliance (ICH-GCP, New Drugs & Clinical Trials Rules 2019, Schedule Y, CTRI registry updates, Institutional Ethics Committee renewal cycles).
+3. Trial Operations Telemetry (Patient accrual velocities, predictive milestone delays, pharmacovigilance causality audits, multi-site capacity optimization).
+
+CURRENT LIVE CLINICAL TELEMETRY SNAPSHOT:
+${JSON.stringify(portfolioSummary, null, 2)}
+
+TASK & BEHAVIOR:
+- If the user provides a greeting (e.g. "hello", "hi", "namaste", "who are you?"), greet them warmly and professionally in the spirit of AIIA Ayurvedic clinical research, and briefly introduce how you can assist with trial oversight, predictive delays, pharmacovigilance, and ethics monitoring.
+- If the user asks a clinical, operational, predictive, or regulatory question, perform deep causal reasoning grounded in the live telemetry snapshot above.
+- Always produce a structured response formatted strictly as a single JSON object with these exact keys:
+{
+  "directAnswer": "Direct, helpful, and articulate answer to the user query with clinical accuracy and Ayurvedic insight.",
+  "supportingData": "Relevant metrics, protocol IDs (e.g. AYU-002), patient percentages, or live status summary.",
+  "reasoning": "Contextual or causal explanation grounding your answer in GCP principles or clinical evidence.",
+  "recommendedActions": [
+    "Actionable operational next step or suggestion 1",
+    "Actionable operational next step or suggestion 2"
+  ],
+  "confidence": 0.96
+}`;
+
+    const candidateModels = [
+      this.model || 'gemini-3.5-flash',
+      'gemini-3.5-flash',
+      'gemini-3.7-flash',
+      'gemini-3.6-flash',
+      'gemini-flash-latest',
+    ];
+    const uniqueModels = [...new Set(candidateModels)];
+
+    let lastError = null;
+
+    for (const modelName of uniqueModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
+        
+        const response = await axios.post(
+          url,
+          {
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  { text: `${systemInstruction}\n\nUSER QUERY: "${prompt}"\n\nProvide your response strictly in JSON format.` }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.3,
+              topP: 0.95,
+              responseMimeType: 'application/json'
+            }
+          },
+          {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 18000
+          }
+        );
+
+        const candidateText = response?.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (candidateText) {
+          let parsed;
+          try {
+            parsed = JSON.parse(candidateText);
+          } catch (e) {
+            const cleaned = candidateText.replace(/```json/g, '').replace(/```/g, '').trim();
+            parsed = JSON.parse(cleaned);
+          }
+
+          if (parsed && parsed.directAnswer) {
+            return {
+              directAnswer: parsed.directAnswer,
+              supportingData: parsed.supportingData || parsed.evidence || 'Analyzed via live Google Gemini AI.',
+              reasoning: parsed.reasoning || '',
+              recommendedActions: Array.isArray(parsed.recommendedActions) ? parsed.recommendedActions : [parsed.recommendedActions || 'Explore active protocols or ask specific trial questions.'],
+              confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.97,
+              source: `Google Gemini (${modelName})`,
+            };
+          }
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`⚠️ Gemini API attempt with model ${modelName} failed:`, err.response?.data?.error?.message || err.message);
+      }
+    }
+
+    throw lastError || new Error('Failed to generate response from Gemini AI');
   }
 
   /**
@@ -153,6 +305,39 @@ class AIService {
   generateHeuristicResponse(prompt, contextData) {
     const query = (prompt || '').toLowerCase().trim();
     const { trials = [], sites = [], alerts = [], safetyEvents = [], complianceRecords = [] } = contextData;
+
+    // 0. Greetings & General Inquiries ("hello", "hi", "namaste", "who are you")
+    if (
+      query === 'hello' ||
+      query === 'hi' ||
+      query === 'hey' ||
+      query.startsWith('hello') ||
+      query.startsWith('hi ') ||
+      query.includes('namaste') ||
+      query.includes('who are you') ||
+      query.includes('what can you do') ||
+      query.includes('help')
+    ) {
+      return {
+        directAnswer: 'Namaste! I am Nadi AI, the Real-Time Clinical Pulse & Decision Support Engine for AIIA and the Ministry of Ayush. How can I assist with your clinical research portfolio today?',
+        evidence: [
+          `Monitoring ${trials.length || 25} active Ayurvedic clinical trial protocols`,
+          `Live telemetry across 8 premier Ayush research institutes in India`,
+          `Continuous pharmacovigilance surveillance & IEC ethics renewal tracking`,
+        ],
+        rootCauses: [
+          'Clinical decision-support system grounded in Good Clinical Practice (ICH-GCP) and Classical Ayurvedic pharmacology.',
+        ],
+        impact: 'LOW',
+        recommendedActions: [
+          'Ask: "Brief Me — Executive Management Summary"',
+          'Ask: "Why is AYU-002 considered high risk?"',
+          'Ask: "What happens if I add two research sites to AYU-002?"',
+          'Ask: "What compliance deadlines are coming in next 10 days?"',
+        ],
+        confidence: 0.98,
+      };
+    }
 
     // 1. Executive Briefing ("Brief me", "Executive brief", "Management summary")
     if (query.includes('brief') || query.includes('executive summary') || query.includes('management summary')) {

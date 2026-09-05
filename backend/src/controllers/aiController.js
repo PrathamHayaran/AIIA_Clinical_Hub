@@ -9,7 +9,7 @@ exports.copilotChat = async (req, res, next) => {
     if (!prompt || prompt.trim() === '') {
       return res.status(400).json({
         success: false,
-        message: 'Prompt is required for AIIA Research Copilot.',
+        message: 'Prompt is required for Nadi AI clinical pulse engine.',
       });
     }
 
@@ -129,6 +129,37 @@ exports.getTrialDiagnosis = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: analysis,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getAIStatus = (req, res, next) => {
+  try {
+    const status = aiService.getApiStatus();
+    res.status(200).json({
+      success: true,
+      data: status,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateAIConfig = (req, res, next) => {
+  try {
+    const { apiKey, model } = req.body;
+    if (apiKey !== undefined) aiService.setApiKey(apiKey);
+    if (model !== undefined) aiService.setModel(model);
+
+    const status = aiService.getApiStatus();
+    res.status(200).json({
+      success: true,
+      message: status.hasKey
+        ? 'Google Gemini AI successfully configured and activated!'
+        : 'Google Gemini key removed; running in high-intelligence heuristic mode.',
+      data: status,
     });
   } catch (error) {
     next(error);

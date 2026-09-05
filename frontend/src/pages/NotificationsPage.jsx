@@ -30,8 +30,8 @@ export const NotificationsPage = () => {
     },
     {
       id: 'notif-3',
-      title: '🤖 AI Research Copilot Analysis Ready',
-      message: 'Automated AI Risk Diagnosis generated for portfolio review.',
+      title: '🫀 Nadi AI Clinical Pulse Ready',
+      message: 'Real-time Ayurvedic & GCP Risk Pulse diagnosis generated for portfolio review.',
       type: 'info',
       isRead: false,
       createdAt: new Date(Date.now() - 3 * 3600 * 1000),

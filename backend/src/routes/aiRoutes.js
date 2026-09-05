@@ -5,6 +5,8 @@ const intelligenceController = require('../controllers/intelligenceController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 router.post('/copilot', authMiddleware, aiController.copilotChat);
+router.get('/status', authMiddleware, aiController.getAIStatus);
+router.post('/config', authMiddleware, aiController.updateAIConfig);
 router.get('/risk/:trialId', authMiddleware, aiController.getTrialDiagnosis);
 
 // "Why?" AI Root Cause Explainability

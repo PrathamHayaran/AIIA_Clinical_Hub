@@ -26,13 +26,14 @@ export const AICopilotPage = () => {
 
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
+  const [aiStatus, setAiStatus] = useState({ hasKey: false, model: 'gemini-1.5-flash', mode: 'HEURISTIC_LOCAL' });
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
       role: 'assistant',
-      directAnswer: 'Namaste! I am the AIIA Research Copilot. I continuously analyze structured telemetry across all 25 Ayurvedic clinical protocols to diagnose risk anomalies, track regulatory expiration horizons, and recommend evidence-based interventions.',
+      directAnswer: 'Namaste! I am Nadi AI, the Real-Time Clinical Pulse & Intelligence Engine for AIIA. I continuously sense and analyze structured telemetry across all 25 Ayurvedic clinical protocols to diagnose risk anomalies, track regulatory expiration horizons, and recommend evidence-based interventions.',
       supportingData: 'Integrated with live database state (Trials, Sites, Pharmacovigilance, IEC Ethics, CTRI).',
-      reasoning: 'I evaluate multi-center recruitment pacing, milestone velocity, serious adverse events, and data completeness to assist clinical investigators.',
+      reasoning: 'I evaluate multi-center recruitment pacing, milestone velocity, serious adverse events, and data completeness to assist clinical investigators and institutional leadership.',
       recommendedActions: [
         'Ask which clinical protocols are operating in High or Critical risk thresholds.',
         'Inquire about upcoming IEC ethics clearance expirations (<15 days).',
@@ -43,6 +44,20 @@ export const AICopilotPage = () => {
   ]);
 
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await api.get('/ai/status');
+        if (res.data.success && res.data.data) {
+          setAiStatus(res.data.data);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchStatus();
+  }, []);
 
   const suggestedQueries = [
     { text: 'Brief Me — Executive Management Summary', category: 'BRIEF' },
@@ -94,12 +109,13 @@ export const AICopilotPage = () => {
           supportingData: aiData.supportingData,
           reasoning: aiData.reasoning,
           recommendedActions: aiData.recommendedActions || [],
+          source: aiData.source,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, assistantMsg]);
       }
     } catch (err) {
-      addToast({ title: 'Copilot Error', message: err.message, type: 'danger' });
+      addToast({ title: 'Nadi AI Error', message: err.message, type: 'danger' });
       setMessages((prev) => [
         ...prev,
         {
@@ -127,28 +143,33 @@ export const AICopilotPage = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-extrabold text-white tracking-tight font-display flex items-center gap-2">
-              <span>AIIA AI Research Copilot</span>
-              <span className="px-2.5 py-0.5 bg-[#f4a28c] text-white text-[10px] font-bold rounded-full">
-                REASONER
+              <span>Nadi AI</span>
+              <span className="px-2.5 py-0.5 bg-[#f4a28c] text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
+                Clinical Pulse & Intelligence
               </span>
             </h1>
             <p className="text-xs text-white/80 font-medium">
-              Autonomous causal diagnosis & evidence synthesis over 25 Ayurvedic trial cohorts.
+              Real-time pulse diagnostics, causal telemetry & predictive risk synthesis over 25 Ayurvedic trial cohorts.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 relative z-10">
+          {/* AI Engine Status Pill */}
+          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-white shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#f4a28c]" />
+            <span>
+              {aiStatus.hasKey
+                ? `Gemini ${aiStatus.model?.includes('pro') ? '1.5 Pro' : '1.5 Flash'} Live`
+                : 'Vedic Heuristic Engine'}
+            </span>
+          </div>
+
           <div className="hidden md:flex items-center gap-2 pr-2">
             <div className="w-10 h-10 flex items-center justify-center">
               <AyurvedicTridosha3D className="w-10 h-10" interactive={false} />
             </div>
             <span className="text-[10px] font-mono text-white/80">3D Bio-Engine</span>
-          </div>
-
-          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-white">
-            <Shield className="w-3.5 h-3.5" />
-            <span>DECISION SUPPORT</span>
           </div>
         </div>
       </div>
@@ -192,9 +213,16 @@ export const AICopilotPage = () => {
               <div className="max-w-3xl w-full p-6 bg-[#f4f8f6] rounded-[28px] rounded-tl-xs space-y-4 text-xs text-slate-800">
                 {/* 1. Direct Answer */}
                 <div className="pb-3 border-b border-slate-200/80">
-                  <div className="flex items-center gap-2 font-bold text-xs uppercase text-slate-500 font-display mb-1.5">
-                    <Sparkles className="w-4 h-4 text-[#f4a28c]" />
-                    <span>Direct Diagnostic Findings:</span>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <div className="flex items-center gap-2 font-bold text-xs uppercase text-slate-500 font-display">
+                      <Sparkles className="w-4 h-4 text-[#f4a28c]" />
+                      <span>Direct Diagnostic Findings:</span>
+                    </div>
+                    {msg.source && (
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold rounded-full border border-emerald-200">
+                        ✨ {msg.source}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm sm:text-base font-bold text-slate-900 font-display leading-relaxed">
                     {msg.directAnswer}
@@ -278,7 +306,7 @@ export const AICopilotPage = () => {
           <div className="flex items-center gap-3 p-3.5 bg-[#f4f8f6] rounded-2xl w-fit">
             <Loader2 className="w-4 h-4 text-[#608c7d] animate-spin" />
             <span className="text-xs font-semibold text-slate-700">
-              AIIA Copilot analyzing telemetry & calculating risk differentials...
+              Nadi AI sensing telemetry pulse & calculating risk differentials...
             </span>
           </div>
         )}

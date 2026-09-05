@@ -48,7 +48,7 @@ export const Navbar = ({ isCollapsed, setIsCollapsed, setIsMobileOpen }) => {
 
   return (
     <header
-      className={`fixed top-0 right-0 h-16 sm:h-20 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b border-slate-200/60 bg-[#edf2ef]/90 backdrop-blur-xl transition-all duration-300 overflow-hidden ${
+      className={`fixed top-0 right-0 h-16 sm:h-20 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b border-slate-200/60 bg-[#edf2ef]/90 backdrop-blur-xl transition-all duration-300 ${
         isCollapsed ? 'left-0 lg:left-20' : 'left-0 lg:left-64'
       }`}
     >
@@ -115,7 +115,7 @@ export const Navbar = ({ isCollapsed, setIsCollapsed, setIsMobileOpen }) => {
         <div className="relative">
           <button
             onClick={() => setIsRoleMenuOpen(!isRoleMenuOpen)}
-            className="flex items-center gap-2 px-3.5 py-2 bg-[#f4a28c] hover:bg-[#e26b4e] text-white rounded-full text-xs font-bold font-display shadow-peach-glow transition-all"
+            className="flex items-center gap-2 px-3.5 py-2 bg-[#f4a28c] hover:bg-[#e26b4e] text-white rounded-full text-xs font-bold font-display shadow-peach-glow transition-all cursor-pointer"
           >
             <UserCheck className="w-3.5 h-3.5" />
             <span className="hidden sm:inline uppercase text-[11px]">{user?.role || 'PERSONA'}</span>
@@ -128,27 +128,34 @@ export const Navbar = ({ isCollapsed, setIsCollapsed, setIsMobileOpen }) => {
           </button>
 
           {isRoleMenuOpen && (
-            <div className="absolute right-0 mt-2 w-72 bg-white rounded-3xl border border-slate-200/80 shadow-soft-xl p-2.5 z-50 animate-in fade-in">
-              <div className="px-3 py-1.5 border-b border-slate-100 mb-1 font-mono font-bold text-[10px] uppercase text-slate-400">
-                ⚡ 1-Click Persona Switcher
+            <>
+              {/* Invisible backdrop to dismiss popup when clicking anywhere outside */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsRoleMenuOpen(false)}
+              />
+              <div className="absolute right-0 mt-2 w-72 bg-white rounded-3xl border border-slate-200/80 shadow-soft-xl p-2.5 z-50 animate-in fade-in">
+                <div className="px-3 py-1.5 border-b border-slate-100 mb-1 font-mono font-bold text-[10px] uppercase text-slate-400">
+                  ⚡ 1-Click Persona Switcher
+                </div>
+                <div className="space-y-1">
+                  {demoRoles.map((r) => (
+                    <button
+                      key={r.role}
+                      onClick={() => handleRoleSwitch(r.role)}
+                      className={`w-full text-left px-3 py-2 rounded-2xl text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${
+                        user?.role === r.role
+                          ? 'bg-[#608c7d] text-white font-bold shadow-sm'
+                          : 'hover:bg-[#f4f8f6] text-slate-700'
+                      }`}
+                    >
+                      <span className="truncate">{r.label}</span>
+                      {user?.role === r.role && <Check className="w-3.5 h-3.5 shrink-0 ml-1" />}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-1">
-                {demoRoles.map((r) => (
-                  <button
-                    key={r.role}
-                    onClick={() => handleRoleSwitch(r.role)}
-                    className={`w-full text-left px-3 py-2 rounded-2xl text-xs font-medium transition-all flex items-center justify-between ${
-                      user?.role === r.role
-                        ? 'bg-[#608c7d] text-white font-bold shadow-sm'
-                        : 'hover:bg-[#f4f8f6] text-slate-700'
-                    }`}
-                  >
-                    <span className="truncate">{r.label}</span>
-                    {user?.role === r.role && <Check className="w-3.5 h-3.5 shrink-0 ml-1" />}
-                  </button>
-                ))}
-              </div>
-            </div>
+            </>
           )}
         </div>
 

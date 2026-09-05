@@ -71,6 +71,22 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('aiia_user');
   };
 
+  const updateProfile = async (profileData) => {
+    try {
+      const res = await api.put('/auth/profile', profileData);
+      if (res.data.success && res.data.user) {
+        setUser(res.data.user);
+        localStorage.setItem('aiia_user', JSON.stringify(res.data.user));
+        return res.data.user;
+      }
+    } catch (err) {
+      const updated = { ...user, ...profileData };
+      setUser(updated);
+      localStorage.setItem('aiia_user', JSON.stringify(updated));
+      return updated;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -81,6 +97,7 @@ export const AuthProvider = ({ children }) => {
         register,
         quickDemoLogin,
         logout,
+        updateProfile,
         isAuthenticated: !!user && !!token,
         isAdmin: user?.role === 'ADMIN',
         isResearcher: user?.role === 'RESEARCHER' || user?.role === 'ADMIN',

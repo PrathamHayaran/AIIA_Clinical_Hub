@@ -211,3 +211,36 @@ exports.quickDemoLogin = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { avatar, name, department } = req.body;
+    const updateData = {};
+
+    if (avatar !== undefined) updateData.avatar = avatar;
+    if (name !== undefined && name.trim() !== '') updateData.name = name.trim();
+    if (department !== undefined && department.trim() !== '') updateData.department = department.trim();
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: updateData,
+      select: {
+        id: true,
+        uniqueId: true,
+        email: true,
+        name: true,
+        role: true,
+        department: true,
+        avatar: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully!',
+      user: updatedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
