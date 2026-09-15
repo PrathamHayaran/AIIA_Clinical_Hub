@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
+import { AddSiteModal } from './AddSiteModal';
 import api from '../services/api';
 import { useNotification } from '../context/NotificationContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 
 export const TrialModal = ({ isOpen, onClose, onTrialCreated, sites = [] }) => {
   const { addToast } = useNotification();
   const [loading, setLoading] = useState(false);
+  const [localSites, setLocalSites] = useState(sites);
+  const [isAddSiteOpen, setIsAddSiteOpen] = useState(false);
+
+  useEffect(() => {
+    setLocalSites(sites);
+  }, [sites]);
   const [formData, setFormData] = useState({
     trialId: '',
     title: '',
@@ -40,6 +47,19 @@ export const TrialModal = ({ isOpen, onClose, onTrialCreated, sites = [] }) => {
     });
   };
 
+  const handleCustomSiteAdded = (newSite) => {
+    setLocalSites((prev) => [newSite, ...prev]);
+    setFormData((prev) => ({
+      ...prev,
+      selectedSites: [...prev.selectedSites, newSite.id],
+    }));
+    addToast({
+      title: 'Center Added & Assigned',
+      message: `${newSite.name} added and selected for this trial.`,
+      type: 'success',
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.trialId || !formData.title || !formData.treatment) {
@@ -69,6 +89,7 @@ export const TrialModal = ({ isOpen, onClose, onTrialCreated, sites = [] }) => {
       setLoading(false);
     }
   };
+
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Register New Clinical Trial Protocol" maxWidth="max-w-3xl">
@@ -234,13 +255,24 @@ export const TrialModal = ({ isOpen, onClose, onTrialCreated, sites = [] }) => {
         </div>
 
         {/* Site Assignment Selection */}
-        {sites && sites.length > 0 && (
-          <div>
-            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 font-display">
-              Participating Ayurvedic Research Centers
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider font-display">
+              Participating Ayurvedic Research Centers ({localSites.length})
             </label>
+            <button
+              type="button"
+              onClick={() => setIsAddSiteOpen(true)}
+              className="flex items-center gap-1 text-[11px] font-bold text-[#608c7d] hover:text-[#456c5f] transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ Add New Research Center</span>
+            </button>
+          </div>
+
+          {localSites && localSites.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto p-3 bg-[#f4f8f6] rounded-2xl border border-slate-200/80">
-              {sites.map((s) => {
+              {localSites.map((s) => {
                 const isSelected = formData.selectedSites.includes(s.id);
                 return (
                   <button
@@ -259,8 +291,19 @@ export const TrialModal = ({ isOpen, onClose, onTrialCreated, sites = [] }) => {
                 );
               })}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="p-3 bg-[#f4f8f6] rounded-2xl border border-dashed border-slate-300 text-center">
+              <span className="text-xs text-slate-500">No research centers available yet.</span>
+              <button
+                type="button"
+                onClick={() => setIsAddSiteOpen(true)}
+                className="ml-2 text-xs font-bold text-[#608c7d] underline"
+              >
+                Create one now
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
           <button
@@ -280,6 +323,14 @@ export const TrialModal = ({ isOpen, onClose, onTrialCreated, sites = [] }) => {
           </button>
         </div>
       </form>
+
+      {/* Add Site Modal */}
+      <AddSiteModal
+        isOpen={isAddSiteOpen}
+        onClose={() => setIsAddSiteOpen(false)}
+        onSiteAdded={handleCustomSiteAdded}
+      />
     </Modal>
   );
 };
+

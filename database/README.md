@@ -2,9 +2,9 @@
 
 This directory contains database schemas, reference SQL DDL, and migration scripts.
 
-## Database Providers
-- **SQLite (Default for Instant Local Hackathon Setup)**: Pre-configured with zero installation hurdles at `backend/prisma/dev.db`.
-- **PostgreSQL (Production Deployment)**: Reference schema file available in `database/schema/schema.sql`. To switch to PostgreSQL, simply update `DATABASE_URL` in `backend/.env` and adjust the provider in `backend/prisma/schema.prisma`.
+## Database Configuration
+- **PostgreSQL (Primary Database Engine)**: Configured in `backend/prisma/schema.prisma` (`provider = "postgresql"`). Works with cloud PostgreSQL (Supabase, Neon, Railway, Render, AWS RDS) or local PostgreSQL instances.
+- **Connection Format**: Set `DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public"` in `backend/.env`.
 
 ## Seed Data Summary
 - **Trials**: 25 diverse Ayurvedic formulations (*Ashwagandha, Curcumin, Guduchi, Triphala, Brahmi, Shilajit, Punarnava, Arjuna, Shatavari, Guggulu, etc.*).
