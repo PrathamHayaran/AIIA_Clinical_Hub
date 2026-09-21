@@ -128,7 +128,7 @@ export const LoginPage = () => {
             <span className="text-white font-black text-sm leading-none">+</span>
           </div>
           <span className="text-2xl sm:text-3xl font-black text-[#1c3322] tracking-tight font-display">
-            messimo
+            AIIA World
           </span>
         </div>
 
