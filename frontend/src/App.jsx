@@ -4,13 +4,16 @@ import { useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { ToastContainer } from './components/ToastContainer';
+import { FallingAyurvedicLeaves3D } from './components/3d/FallingAyurvedicLeaves3D';
+import { PatientLayout } from './components/patient/PatientLayout';
 
-// Pages
+// Staff / Researcher Pages
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TrialsPage } from './pages/TrialsPage';
 import { TrialDetailPage } from './pages/TrialDetailPage';
 import { RecruitmentPage } from './pages/RecruitmentPage';
+import { ConsultationsPage } from './pages/ConsultationsPage';
 import { SitesPage } from './pages/SitesPage';
 import { SafetyPage } from './pages/SafetyPage';
 import { CompliancePage } from './pages/CompliancePage';
@@ -19,16 +22,28 @@ import { AlertsPage } from './pages/AlertsPage';
 import { AICopilotPage } from './pages/AICopilotPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { SettingsPage } from './pages/SettingsPage';
-import { FallingAyurvedicLeaves3D } from './components/3d/FallingAyurvedicLeaves3D';
 
-// Sage Organic Minimalist Layout Wrapper
-const AppLayout = ({ children }) => {
+// Patient Portal Pages
+import PatientDashboardPage from './pages/patient/PatientDashboardPage';
+import PatientTrialPage from './pages/patient/PatientTrialPage';
+import PatientVisitsPage from './pages/patient/PatientVisitsPage';
+import PatientTreatmentPage from './pages/patient/PatientTreatmentPage';
+import PatientSafetyPage from './pages/patient/PatientSafetyPage';
+import PatientQuestionnairesPage from './pages/patient/PatientQuestionnairesPage';
+import PatientDocumentsPage from './pages/patient/PatientDocumentsPage';
+import PatientProfilePage from './pages/patient/PatientProfilePage';
+import PatientNotificationsPage from './pages/patient/PatientNotificationsPage';
+import PatientStudyTeamPage from './pages/patient/PatientStudyTeamPage';
+import PatientPrivacyPage from './pages/patient/PatientPrivacyPage';
+
+// Sage Organic Minimalist Layout Wrapper for Staff
+const StaffLayout = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#edf2ef] text-slate-900 flex font-sans relative">
-      {/* 3D Global Falling Ayurvedic Leaves from Top to Bottom */}
+      {/* 3D Global Falling Ayurvedic Leaves */}
       <FallingAyurvedicLeaves3D count={36} />
 
       {/* Sidebar */}
@@ -64,9 +79,9 @@ const AppLayout = ({ children }) => {
   );
 };
 
-// Route Guard
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+// Staff Route Guard
+const StaffProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
     return (
@@ -80,133 +95,270 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  return <AppLayout>{children}</AppLayout>;
+  // If a Patient token is accessing staff pages, redirect to Patient Portal
+  if (user?.role === 'PATIENT') {
+    return <Navigate to="/patient/dashboard" replace />;
+  }
+
+  return <StaffLayout>{children}</StaffLayout>;
+};
+
+// Patient Route Guard
+const PatientProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#edf2ef] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#608c7d] border-t-[#f4a28c] rounded-full animate-spin shadow-sm" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If a Staff member visits patient portal, allow them to view or redirect to dashboard
+  // For strict separation: if user is not PATIENT, redirect to staff dashboard
+  if (user?.role !== 'PATIENT') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <PatientLayout>{children}</PatientLayout>;
+};
+
+// Root Index Redirector
+const IndexRedirect = () => {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#edf2ef] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#608c7d] border-t-[#f4a28c] rounded-full animate-spin shadow-sm" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user?.role === 'PATIENT') {
+    return <Navigate to="/patient/dashboard" replace />;
+  }
+
+  return <Navigate to="/dashboard" replace />;
 };
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/" element={<IndexRedirect />} />
 
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-
+      {/* ========================================================================= */}
+      {/* STAFF & RESEARCHER ROUTES */}
+      {/* ========================================================================= */}
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <DashboardPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/trials"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <TrialsPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/trials/:id"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <TrialDetailPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/recruitment"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <RecruitmentPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
+      <Route
+        path="/consultations"
+        element={
+          <StaffProtectedRoute>
+            <ConsultationsPage />
+          </StaffProtectedRoute>
+        }
+      />
       <Route
         path="/sites"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <SitesPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/safety"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <SafetyPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/compliance"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <CompliancePage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/analytics"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <AnalyticsPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/alerts"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <AlertsPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/ai-copilot"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <AICopilotPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/notifications"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <NotificationsPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
         }
       />
-
       <Route
         path="/settings"
         element={
-          <ProtectedRoute>
+          <StaffProtectedRoute>
             <SettingsPage />
-          </ProtectedRoute>
+          </StaffProtectedRoute>
+        }
+      />
+
+      {/* ========================================================================= */}
+      {/* PATIENT PORTAL ROUTES */}
+      {/* ========================================================================= */}
+      <Route
+        path="/patient/dashboard"
+        element={
+          <PatientProtectedRoute>
+            <PatientDashboardPage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/trial"
+        element={
+          <PatientProtectedRoute>
+            <PatientTrialPage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/visits"
+        element={
+          <PatientProtectedRoute>
+            <PatientVisitsPage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/treatment"
+        element={
+          <PatientProtectedRoute>
+            <PatientTreatmentPage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/safety"
+        element={
+          <PatientProtectedRoute>
+            <PatientSafetyPage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/questionnaires"
+        element={
+          <PatientProtectedRoute>
+            <PatientQuestionnairesPage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/documents"
+        element={
+          <PatientProtectedRoute>
+            <PatientDocumentsPage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/profile"
+        element={
+          <PatientProtectedRoute>
+            <PatientProfilePage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/notifications"
+        element={
+          <PatientProtectedRoute>
+            <PatientNotificationsPage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/study-team"
+        element={
+          <PatientProtectedRoute>
+            <PatientStudyTeamPage />
+          </PatientProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/privacy"
+        element={
+          <PatientProtectedRoute>
+            <PatientPrivacyPage />
+          </PatientProtectedRoute>
         }
       />
 
       {/* Fallback */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<IndexRedirect />} />
     </Routes>
   );
 }

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const authRoutes = require('./authRoutes');
+const patientRoutes = require('./patientRoutes');
 const trialRoutes = require('./trialRoutes');
 const recruitmentRoutes = require('./recruitmentRoutes');
 const safetyRoutes = require('./safetyRoutes');
@@ -13,6 +14,9 @@ const aiRoutes = require('./aiRoutes');
 const intelligenceRoutes = require('./intelligenceRoutes');
 const scenarioRoutes = require('./scenarioRoutes');
 const actionCenterRoutes = require('./actionCenterRoutes');
+const consultationRoutes = require('./consultationRoutes');
+const authMiddleware = require('../middleware/authMiddleware');
+const staffGuard = require('../middleware/staffGuard');
 
 // API Health Check
 router.get('/health', (req, res) => {
@@ -25,17 +29,25 @@ router.get('/health', (req, res) => {
   });
 });
 
+// Authentication routes (accessible to all)
 router.use('/auth', authRoutes);
-router.use('/trials', trialRoutes);
-router.use('/recruitment', recruitmentRoutes);
-router.use('/safety', safetyRoutes);
-router.use('/compliance', complianceRoutes);
-router.use('/sites', siteRoutes);
-router.use('/alerts', alertRoutes);
-router.use('/analytics', analyticsRoutes);
-router.use('/ai', aiRoutes);
-router.use('/intelligence', intelligenceRoutes);
-router.use('/scenarios', scenarioRoutes);
-router.use('/action-center', actionCenterRoutes);
+
+// Dedicated Patient Portal routes (internally uses authMiddleware + patientGuard)
+router.use('/patient', patientRoutes);
+
+// Staff / Researcher / Admin routes (protected by authMiddleware + staffGuard)
+router.use('/trials', authMiddleware, staffGuard, trialRoutes);
+router.use('/recruitment', authMiddleware, staffGuard, recruitmentRoutes);
+router.use('/consultations', authMiddleware, staffGuard, consultationRoutes);
+router.use('/safety', authMiddleware, staffGuard, safetyRoutes);
+router.use('/compliance', authMiddleware, staffGuard, complianceRoutes);
+router.use('/sites', authMiddleware, staffGuard, siteRoutes);
+router.use('/alerts', authMiddleware, staffGuard, alertRoutes);
+router.use('/analytics', authMiddleware, staffGuard, analyticsRoutes);
+router.use('/ai', authMiddleware, staffGuard, aiRoutes);
+router.use('/intelligence', authMiddleware, staffGuard, intelligenceRoutes);
+router.use('/scenarios', authMiddleware, staffGuard, scenarioRoutes);
+router.use('/action-center', authMiddleware, staffGuard, actionCenterRoutes);
 
 module.exports = router;
+

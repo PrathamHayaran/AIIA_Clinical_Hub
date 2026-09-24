@@ -6,7 +6,12 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting comprehensive AIIA synthetic data seeding...');
 
-  // Clean existing records safely
+  // Clean existing records safely in dependency order
+  await prisma.patientStudyMessage.deleteMany({});
+  await prisma.patientDocument.deleteMany({});
+  await prisma.patientAdherenceLog.deleteMany({});
+  await prisma.patientQuestionnaire.deleteMany({});
+  await prisma.patientVisit.deleteMany({});
   await prisma.aIAnalysis.deleteMany({});
   await prisma.notification.deleteMany({});
   await prisma.alert.deleteMany({});
@@ -73,6 +78,15 @@ async function main() {
       department: 'Ministry of Ayush & Governing Body',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     },
+    {
+      uniqueId: 'AIIA-PAT-1001',
+      email: 'patient@aiia.demo',
+      password: passwordHash,
+      name: 'Aditi Sharma',
+      role: 'PATIENT',
+      department: 'Trial Participant (AYU-001 Cohort)',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    },
   ];
 
   const createdUsers = [];
@@ -80,7 +94,8 @@ async function main() {
     const user = await prisma.user.create({ data: u });
     createdUsers.push(user);
   }
-  console.log(`✅ Created ${createdUsers.length} demo users.`);
+  const patientUser = createdUsers.find(u => u.role === 'PATIENT');
+  console.log(`✅ Created ${createdUsers.length} demo users (including Patient Persona).`);
 
   // 2. Seed Premier Ayurvedic Research Centers
   const sitesData = [
@@ -916,37 +931,339 @@ async function main() {
   const doshaList = ['Vata', 'Pitta', 'Kapha', 'Vata-Pitta', 'Pitta-Kapha', 'Vata-Kapha', 'Tridoshic'];
   const patientStatuses = ['Completed', 'On-Treatment', 'Follow-Up', 'Dropped', 'Enrolled'];
   let patientCount = 0;
+  let demoPatientRecord = null;
 
-  for (const trial of createdTrials.slice(0, 10)) {
+  for (const [tIdx, trial] of createdTrials.slice(0, 10).entries()) {
     const trialSites = await prisma.trialSite.findMany({ where: { trialId: trial.id } });
     const countToGenerate = Math.min(trial.currentEnrolled, 60);
 
     for (let i = 1; i <= countToGenerate; i++) {
       const site = trialSites[i % trialSites.length];
-      const age = 22 + Math.floor(Math.random() * 48);
-      const gender = i % 2 === 0 ? 'Female' : 'Male';
-      const dosha = doshaList[i % doshaList.length];
-      const status = trial.status === 'Completed' ? 'Completed' : patientStatuses[i % patientStatuses.length];
+      const age = tIdx === 0 && i === 1 ? 28 : (22 + Math.floor(Math.random() * 48));
+      const gender = tIdx === 0 && i === 1 ? 'Female' : (i % 2 === 0 ? 'Female' : 'Male');
+      const dosha = tIdx === 0 && i === 1 ? 'Vata-Pitta' : doshaList[i % doshaList.length];
+      const status = tIdx === 0 && i === 1 ? 'Enrolled' : (trial.status === 'Completed' ? 'Completed' : patientStatuses[i % patientStatuses.length]);
       const hasAdverse = i === 7 || i === 23; // synthetic adverse event flag
 
-      await prisma.patient.create({
+      const isDemoPatient = tIdx === 0 && i === 1;
+      const patientCode = isDemoPatient ? 'SYNTH-DEL-1001' : `SYNTH-${trial.trialId}-${String(i).padStart(4, '0')}`;
+
+      const createdPat = await prisma.patient.create({
         data: {
-          syntheticPatientId: `SYNTH-${trial.trialId}-${String(i).padStart(4, '0')}`,
+          syntheticPatientId: patientCode,
           trialId: trial.id,
           siteId: site.siteId,
+          userId: isDemoPatient && patientUser ? patientUser.id : null,
           age: age,
           gender: gender,
           doshaPrakriti: dosha,
-          enrollmentDate: new Date(trial.startDate.getTime() + i * 2 * 24 * 60 * 60 * 1000),
+          phone: isDemoPatient ? '+91-98112-44556' : `+91-98${Math.floor(10000000 + Math.random() * 90000000)}`,
+          emergencyContact: isDemoPatient ? '+91-98112-99887 (Rohit Sharma - Spouse)' : '+91-98000-00000',
+          address: isDemoPatient ? 'Flat 402, Lotus Greens, Sarita Vihar, New Delhi' : 'New Delhi, India',
+          adherenceRate: isDemoPatient ? 88 : Math.floor(75 + Math.random() * 24),
+          enrollmentDate: new Date('2026-06-12'),
           status: status,
           hasAdverseEvent: hasAdverse,
           dataCompleteness: status === 'Dropped' ? 70 : 100,
         },
       });
+
+      if (isDemoPatient) {
+        demoPatientRecord = createdPat;
+      }
       patientCount++;
     }
   }
   console.log(`✅ Seeded ${patientCount} synthetic de-identified patient profiles.`);
+
+  // 6b. Seed Dedicated Patient Portal Records for Demo Patient (SYNTH-DEL-1001)
+  if (demoPatientRecord) {
+    // 1. Patient Visits Timeline (4 Completed, 1 Upcoming, 2 Scheduled)
+    const visitsData = [
+      {
+        patientId: demoPatientRecord.id,
+        visitNumber: 1,
+        title: 'Screening & Consent Visit',
+        visitType: 'In-Person Clinical Exam',
+        scheduledDate: new Date('2026-06-12T09:30:00Z'),
+        scheduledTime: '09:30 AM',
+        location: 'AIIA Main Campus, New Delhi - OPD Room 204',
+        doctorName: 'Dr. Anand Kumar (PI)',
+        status: 'COMPLETED',
+        completedDate: new Date('2026-06-12T11:00:00Z'),
+        summaryNotes: 'Informed consent signed. Preliminary Prakriti assessment (Vata-Pitta) confirmed. Inclusion criteria verified.',
+      },
+      {
+        patientId: demoPatientRecord.id,
+        visitNumber: 2,
+        title: 'Baseline Biomarker Assessment',
+        visitType: 'Laboratory & ECG Evaluation',
+        scheduledDate: new Date('2026-06-20T10:00:00Z'),
+        scheduledTime: '10:00 AM',
+        location: 'AIIA Central Diagnostic Wing - Room 108',
+        doctorName: 'Dr. Anand Kumar (PI)',
+        status: 'COMPLETED',
+        completedDate: new Date('2026-06-20T11:30:00Z'),
+        summaryNotes: 'Fasting serum cortisol & lipid profile drawn. Baseline PSS-10 score (24/40) recorded. Study drug WS-35 issued.',
+      },
+      {
+        patientId: demoPatientRecord.id,
+        visitNumber: 3,
+        title: 'Week 4 Progress Evaluation',
+        visitType: 'Clinical Follow-up & Vitals',
+        scheduledDate: new Date('2026-07-20T10:30:00Z'),
+        scheduledTime: '10:30 AM',
+        location: 'AIIA Main Campus, New Delhi - OPD Room 204',
+        doctorName: 'Dr. Anand Kumar (PI)',
+        status: 'COMPLETED',
+        completedDate: new Date('2026-07-20T11:15:00Z'),
+        summaryNotes: 'Medication adherence at 92%. Sleep latency improved. No gastrointestinal complaints reported.',
+      },
+      {
+        patientId: demoPatientRecord.id,
+        visitNumber: 4,
+        title: 'Mid-Study Safety Review',
+        visitType: 'Clinical Follow-up & Lab',
+        scheduledDate: new Date('2026-08-18T10:30:00Z'),
+        scheduledTime: '10:30 AM',
+        location: 'AIIA Main Campus, New Delhi - OPD Room 204',
+        doctorName: 'Dr. Anand Kumar (PI)',
+        status: 'COMPLETED',
+        completedDate: new Date('2026-08-18T11:45:00Z'),
+        summaryNotes: 'Liver & renal function tests within normal limits. Study medication bottle re-issued (Batch WS-35-B2).',
+      },
+      {
+        patientId: demoPatientRecord.id,
+        visitNumber: 5,
+        title: 'Week 12 Clinical Assessment',
+        visitType: 'Comprehensive Follow-up & Lab',
+        scheduledDate: new Date('2026-09-24T10:30:00Z'),
+        scheduledTime: '10:30 AM',
+        location: 'AIIA Main Campus, New Delhi - OPD Room 204',
+        doctorName: 'Dr. Anand Kumar (PI)',
+        status: 'UPCOMING',
+        instructions: 'Please arrive 15 minutes prior to appointment. Bring your current study medication container for pill reconciliation. 8-hour fasting recommended for serum lipid profiling.',
+      },
+      {
+        patientId: demoPatientRecord.id,
+        visitNumber: 6,
+        title: 'Week 16 Follow-up Exam',
+        visitType: 'Clinical Follow-up',
+        scheduledDate: new Date('2026-10-22T11:00:00Z'),
+        scheduledTime: '11:00 AM',
+        location: 'AIIA Main Campus, New Delhi - OPD Room 204',
+        doctorName: 'Dr. Anand Kumar (PI)',
+        status: 'SCHEDULED',
+        instructions: 'Routine vital check and questionnaire review.',
+      },
+      {
+        patientId: demoPatientRecord.id,
+        visitNumber: 7,
+        title: 'Study Completion & Closeout',
+        visitType: 'Final Closeout & Debrief',
+        scheduledDate: new Date('2026-11-20T10:00:00Z'),
+        scheduledTime: '10:00 AM',
+        location: 'AIIA Main Campus, New Delhi - OPD Room 204',
+        doctorName: 'Dr. Anand Kumar (PI)',
+        status: 'SCHEDULED',
+        instructions: 'Final health assessment, exit survey, and study debriefing.',
+      },
+    ];
+
+    for (const v of visitsData) {
+      await prisma.patientVisit.create({ data: v });
+    }
+    console.log(`✅ Seeded ${visitsData.length} visits for demo patient.`);
+
+    // 2. Patient Questionnaires
+    const questionnairesData = [
+      {
+        patientId: demoPatientRecord.id,
+        title: 'Perceived Stress Scale (PSS-10)',
+        category: 'Stress & Mental Health',
+        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+        status: 'PENDING',
+        questionsJson: JSON.stringify([
+          { id: 'q1', text: 'In the last month, how often have you been upset because of something that happened unexpectedly?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+          { id: 'q2', text: 'In the last month, how often have you felt that you were unable to control the important things in your life?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+          { id: 'q3', text: 'In the last month, how often have you felt nervous and stressed?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+          { id: 'q4', text: 'In the last month, how often have you felt confident about your ability to handle your personal problems?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+          { id: 'q5', text: 'In the last month, how often have you felt that things were going your way?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+          { id: 'q6', text: 'In the last month, how often have you found that you could not cope with all the things that you had to do?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+          { id: 'q7', text: 'In the last month, how often have you been able to control irritations in your life?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+          { id: 'q8', text: 'In the last month, how often have you felt that you were on top of things?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+          { id: 'q9', text: 'In the last month, how often have you been angered because of things that were outside of your control?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+          { id: 'q10', text: 'In the last month, how often have you felt difficulties were piling up so high that you could not overcome them?', type: 'scale_0_4', options: ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'] },
+        ]),
+      },
+      {
+        patientId: demoPatientRecord.id,
+        title: 'Ayurvedic Agni & Sleep Quality Index',
+        category: 'Digestion & Sleep Health',
+        dueDate: new Date('2026-08-15'),
+        completedAt: new Date('2026-08-14T18:30:00Z'),
+        status: 'COMPLETED',
+        score: 18,
+        questionsJson: JSON.stringify([
+          { id: 'q1', text: 'How would you rate your digestive fire (Agni) and appetite over the past 2 weeks?', type: 'scale_1_5', options: ['Very Poor (Manda)', 'Irregular (Vishama)', 'Moderate (Madhyama)', 'Good (Sama)', 'Excessive (Tikshna)'] },
+          { id: 'q2', text: 'How many hours of uninterrupted sleep do you typically get per night?', type: 'multiple_choice', options: ['Under 5 hours', '5-6 hours', '6-7 hours', '7-8 hours', 'More than 8 hours'] },
+          { id: 'q3', text: 'Do you feel rested and rejuvenated upon waking in the morning (Pratah)?', type: 'yes_no', options: ['Yes', 'No'] },
+        ]),
+        answersJson: JSON.stringify({ q1: 'Good (Sama)', q2: '7-8 hours', q3: 'Yes' }),
+        feedbackNotes: 'Satisfactory digestive rhythm and improved sleep quality reported.',
+      },
+      {
+        patientId: demoPatientRecord.id,
+        title: 'Baseline Quality of Life Questionnaire (WHO-QOL)',
+        category: 'General Wellbeing',
+        dueDate: new Date('2026-06-20'),
+        completedAt: new Date('2026-06-20T10:00:00Z'),
+        status: 'COMPLETED',
+        score: 82,
+        questionsJson: JSON.stringify([
+          { id: 'q1', text: 'How would you rate your overall quality of life at baseline?', type: 'scale_1_5', options: ['Very Poor', 'Poor', 'Neither Poor nor Good', 'Good', 'Very Good'] },
+          { id: 'q2', text: 'How satisfied are you with your daily physical energy levels?', type: 'scale_1_5', options: ['Very Dissatisfied', 'Dissatisfied', 'Neutral', 'Satisfied', 'Very Satisfied'] },
+        ]),
+        answersJson: JSON.stringify({ q1: 'Good', q2: 'Satisfied' }),
+        feedbackNotes: 'Baseline quality of life record logged for comparison against primary endpoints.',
+      },
+    ];
+
+    for (const q of questionnairesData) {
+      await prisma.patientQuestionnaire.create({ data: q });
+    }
+    console.log(`✅ Seeded ${questionnairesData.length} questionnaires for demo patient.`);
+
+    // 3. Patient Adherence Logs (Past 14 days)
+    for (let day = 14; day >= 1; day--) {
+      const date = new Date(Date.now() - day * 24 * 60 * 60 * 1000);
+      const isMissed = day === 6;
+      await prisma.patientAdherenceLog.create({
+        data: {
+          patientId: demoPatientRecord.id,
+          date: date,
+          status: isMissed ? 'MISSED' : 'TAKEN',
+          doseTime: 'Morning (Pratah) - 08:30 AM',
+          notes: isMissed ? 'Forgot morning dose due to out-of-town travel' : 'Taken with warm water post-breakfast',
+        },
+      });
+    }
+    console.log('✅ Seeded 14 daily medication adherence logs.');
+
+    // 4. Patient Documents & Consent
+    const docsData = [
+      {
+        patientId: demoPatientRecord.id,
+        title: 'Informed Consent Form (ICF v2.1 - IEC Approved)',
+        type: 'CONSENT',
+        consentStatus: 'ACTIVE',
+        consentDate: new Date('2026-06-12'),
+      },
+      {
+        patientId: demoPatientRecord.id,
+        title: 'Participant Information Sheet (PIS)',
+        type: 'INFORMATION_SHEET',
+        consentStatus: 'ACTIVE',
+        consentDate: new Date('2026-06-12'),
+      },
+      {
+        patientId: demoPatientRecord.id,
+        title: 'Ayurvedic Pathya-Apathya Dietary Guidance Chart',
+        type: 'DIET_CHART',
+        consentStatus: 'ACTIVE',
+        consentDate: new Date('2026-06-12'),
+      },
+      {
+        patientId: demoPatientRecord.id,
+        title: 'Study Visit Schedule & Fasting Guidelines',
+        type: 'PROTOCOL_GUIDE',
+        consentStatus: 'ACTIVE',
+        consentDate: new Date('2026-06-12'),
+      },
+    ];
+
+    for (const d of docsData) {
+      await prisma.patientDocument.create({ data: d });
+    }
+    console.log(`✅ Seeded ${docsData.length} participant documents.`);
+
+    // 5. Patient Study Team Messages
+    const messagesData = [
+      {
+        patientId: demoPatientRecord.id,
+        senderRole: 'STUDY_TEAM',
+        senderName: 'Dr. Anand Kumar (Principal Investigator)',
+        subject: 'Welcome to AYU-001 Study Protocol',
+        message: 'Dear Aditi, welcome to the clinical trial at AIIA New Delhi. Your assigned research coordinator is Dr. Sharma. Please feel free to message us through this secure portal with any questions regarding your scheduled visits or study instructions.',
+        isRead: true,
+        createdAt: new Date('2026-06-13T10:00:00Z'),
+      },
+      {
+        patientId: demoPatientRecord.id,
+        senderRole: 'PATIENT',
+        senderName: 'Aditi Sharma',
+        subject: 'Re: Welcome to AYU-001 Study Protocol',
+        message: 'Thank you Dr. Kumar. I have received the morning dosage container and completed my baseline evaluation.',
+        isRead: true,
+        createdAt: new Date('2026-06-14T14:20:00Z'),
+      },
+      {
+        patientId: demoPatientRecord.id,
+        senderRole: 'STUDY_TEAM',
+        senderName: 'Dr. Anand Kumar (Principal Investigator)',
+        subject: 'Reminder: Week 12 Visit Preparation',
+        message: 'Hello Aditi, just a quick reminder for your upcoming Visit 5 on Sept 24th at 10:30 AM. Remember to fast for 8 hours before your morning blood draw and bring your current medication bottle for the pill reconciliation count.',
+        isRead: false,
+        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      },
+    ];
+
+    for (const m of messagesData) {
+      await prisma.patientStudyMessage.create({ data: m });
+    }
+    console.log(`✅ Seeded ${messagesData.length} study team messages.`);
+
+    // 6. Patient Notifications
+    if (patientUser) {
+      await prisma.notification.createMany({
+        data: [
+          {
+            userId: patientUser.id,
+            title: '📅 Upcoming Study Visit',
+            message: 'Your Week 12 Clinical Assessment is scheduled for Sept 24th at 10:30 AM.',
+            type: 'info',
+            isRead: false,
+            link: '/patient/visits',
+          },
+          {
+            userId: patientUser.id,
+            title: '📋 Pending Questionnaire',
+            message: 'Your Perceived Stress Scale (PSS-10) questionnaire is due in 2 days.',
+            type: 'warning',
+            isRead: false,
+            link: '/patient/questionnaires',
+          },
+          {
+            userId: patientUser.id,
+            title: '💬 New Message from Study Team',
+            message: 'Dr. Anand Kumar sent a message regarding your upcoming visit instructions.',
+            type: 'info',
+            isRead: false,
+            link: '/patient/study-team',
+          },
+          {
+            userId: patientUser.id,
+            title: '🛡️ Safety Status Confirmed',
+            message: 'Mid-study liver and renal safety profiles verified normal by safety coordinator.',
+            type: 'success',
+            isRead: true,
+            link: '/patient/safety',
+          },
+        ],
+      });
+      console.log('✅ Seeded patient-specific notifications.');
+    }
+  }
 
   // 7. Seed Recruitment Velocity Records
   const months = ['2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12', '2025-01'];

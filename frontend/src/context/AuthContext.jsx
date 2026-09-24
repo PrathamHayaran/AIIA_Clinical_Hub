@@ -104,6 +104,7 @@ export const AuthProvider = ({ children }) => {
         isSafetyOfficer: user?.role === 'SAFETY_OFFICER' || user?.role === 'ADMIN',
         isComplianceOfficer: user?.role === 'COMPLIANCE_OFFICER' || user?.role === 'ADMIN',
         isManagement: user?.role === 'MANAGEMENT' || user?.role === 'ADMIN',
+        isPatient: user?.role === 'PATIENT',
       }}
     >
       {children}

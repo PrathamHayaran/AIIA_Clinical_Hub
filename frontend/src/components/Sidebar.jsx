@@ -24,6 +24,7 @@ import {
   Flame,
   Wind,
   Droplets,
+  MessageSquare,
 } from 'lucide-react';
 
 export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen }) => {
@@ -50,6 +51,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'Clinical Trials', icon: FlaskConical, path: '/trials', badge: '25' },
     { label: 'Patient Cohorts', icon: Users, path: '/recruitment', badge: '86%' },
+    { label: 'Participant Consults', icon: MessageSquare, path: '/consultations', badge: 'CHAT' },
     { label: 'Research Centers', icon: Building2, path: '/sites' },
     { label: 'Safety & PV', icon: Activity, path: '/safety', badge: 'PV' },
     { label: 'Compliance & IEC', icon: ShieldCheck, path: '/compliance' },

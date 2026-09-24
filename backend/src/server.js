@@ -23,7 +23,7 @@ const io = new Server(server, {
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
-});
+});  
 
 setupSocketIO(io);
 alertEngine.setSocketIO(io);

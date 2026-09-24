@@ -10,6 +10,7 @@ const generateUniqueId = async (role) => {
     SAFETY_OFFICER: 'SAF',
     COMPLIANCE_OFFICER: 'CMP',
     MANAGEMENT: 'MGT',
+    PATIENT: 'PAT',
   };
 
   const prefix = rolePrefixes[role] || 'USR';
@@ -52,7 +53,7 @@ exports.login = async (req, res, next) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid password. For demo accounts use: Demo@AIIA2025',
+        message: 'Invalid email address or credentials.',
       });
     }
 
@@ -83,9 +84,9 @@ exports.register = async (req, res, next) => {
       email,
       password,
       name,
-      role = 'RESEARCHER',
       department = 'Kayachikitsa (Internal Medicine)',
     } = req.body;
+    const role = 'RESEARCHER';
 
     if (!email || !password || !name) {
       return res.status(400).json({
@@ -177,8 +178,23 @@ exports.getMe = async (req, res, next) => {
 // Demo quick-login helper for seamless hackathon switching
 exports.quickDemoLogin = async (req, res, next) => {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({
+        success: false,
+        message: 'Demo access is disabled in production.',
+      });
+    }
+
     const { role } = req.body;
     const targetRole = role ? role.toUpperCase() : 'ADMIN';
+    const allowedRoles = ['ADMIN', 'RESEARCHER', 'SAFETY_OFFICER', 'COMPLIANCE_OFFICER', 'MANAGEMENT', 'PATIENT'];
+
+    if (!allowedRoles.includes(targetRole)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid demo role.',
+      });
+    }
 
     const user = await prisma.user.findFirst({
       where: { role: targetRole },

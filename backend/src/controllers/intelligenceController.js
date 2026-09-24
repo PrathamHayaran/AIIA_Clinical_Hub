@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/db');
 
 const { calculateTrialHealth, calculatePortfolioHealth } = require('../services/healthScoringService');
 const { calculateTrialRisk } = require('../services/riskScoringService');

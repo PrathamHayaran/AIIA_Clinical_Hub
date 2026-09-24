@@ -115,14 +115,7 @@ TASK & BEHAVIOR:
   "confidence": 0.96
 }`;
 
-    const candidateModels = [
-      this.model || 'gemini-3.5-flash',
-      'gemini-3.5-flash',
-      'gemini-3.7-flash',
-      'gemini-3.6-flash',
-      'gemini-flash-latest',
-    ];
-    const uniqueModels = [...new Set(candidateModels)];
+    const uniqueModels = [this.model || 'gemini-3.5-flash'];
 
     let lastError = null;
 
@@ -149,7 +142,7 @@ TASK & BEHAVIOR:
           },
           {
             headers: { 'Content-Type': 'application/json' },
-            timeout: 18000
+            timeout: 8000
           }
         );
 

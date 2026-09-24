@@ -37,6 +37,8 @@ api.interceptors.response.use(
         }
       }
       message = error.response.data?.message || `Server responded with error status ${error.response.status}`;
+    } else if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      message = 'The AI service took too long to respond. Please try again.';
     } else if (error.request) {
       message = 'Cannot connect to AIIA Backend server. Please check that the API server is running on Port 5000.';
     } else {

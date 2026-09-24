@@ -99,7 +99,7 @@ export const AICopilotPage = () => {
     setLoading(true);
 
     try {
-      const res = await api.post('/ai/copilot', { prompt: queryToSend });
+      const res = await api.post('/ai/copilot', { prompt: queryToSend }, { timeout: 50000 });
       if (res.data.success && res.data.data) {
         const aiData = res.data.data;
         const assistantMsg = {

@@ -111,8 +111,7 @@ export const Navbar = ({ isCollapsed, setIsCollapsed, setIsMobileOpen }) => {
             <span className="opacity-70 font-normal">({latencyMs}ms)</span>
           )}
         </div>
-        {/* 1-Click Role Switcher */}
-        <div className="relative">
+        {import.meta.env.DEV && <div className="relative">
           <button
             onClick={() => setIsRoleMenuOpen(!isRoleMenuOpen)}
             className="flex items-center gap-2 px-3.5 py-2 bg-[#f4a28c] hover:bg-[#e26b4e] text-white rounded-full text-xs font-bold font-display shadow-peach-glow transition-all cursor-pointer"
@@ -157,7 +156,7 @@ export const Navbar = ({ isCollapsed, setIsCollapsed, setIsMobileOpen }) => {
               </div>
             </>
           )}
-        </div>
+        </div>}
 
         {/* Notification Bell */}
         <button

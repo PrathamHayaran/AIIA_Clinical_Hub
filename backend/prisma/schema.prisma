@@ -9,17 +9,18 @@ datasource db {
 
 model User {
   id           String         @id @default(uuid())
-  uniqueId     String?        @unique // e.g. AIIA-RES-7821, AIIA-ADM-1001, AIIA-SAF-4091
+  uniqueId     String?        @unique // e.g. AIIA-RES-7821, AIIA-ADM-1001, AIIA-SAF-4091, AIIA-PAT-1001
   email        String         @unique
   password     String
   name         String
-  role         String         // ADMIN, RESEARCHER, SAFETY_OFFICER, COMPLIANCE_OFFICER, MANAGEMENT
+  role         String         // ADMIN, RESEARCHER, SAFETY_OFFICER, COMPLIANCE_OFFICER, MANAGEMENT, PATIENT
   department   String         @default("Clinical Research")
   avatar       String?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   trials       Trial[]        @relation("CreatedTrials")
   notifications Notification[]
+  patient      Patient?       @relation("UserPatient")
 }
 
 model Trial {
@@ -122,14 +123,100 @@ model Patient {
   trial              Trial        @relation(fields: [trialId], references: [id], onDelete: Cascade)
   siteId             String
   site               ResearchSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  userId             String?      @unique
+  user               User?        @relation("UserPatient", fields: [userId], references: [id], onDelete: SetNull)
   age                Int
   gender             String       // Male, Female, Other
   doshaPrakriti      String       // Vata, Pitta, Kapha, Vata-Pitta, Pitta-Kapha, Vata-Kapha, Tridoshic
+  phone              String?      @default("+91-98765-43210")
+  emergencyContact   String?      @default("+91-98765-11223")
+  address            String?      @default("Sarita Vihar, New Delhi, India")
+  adherenceRate      Int          @default(88)
   enrollmentDate     DateTime     @default(now())
   status             String       @default("Enrolled") // Screened, Enrolled, On-Treatment, Follow-Up, Completed, Dropped
   hasAdverseEvent    Boolean      @default(false)
   dataCompleteness   Int          @default(100)
   createdAt          DateTime     @default(now())
+
+  visits             PatientVisit[]
+  questionnaires     PatientQuestionnaire[]
+  adherenceLogs      PatientAdherenceLog[]
+  documents          PatientDocument[]
+  messages           PatientStudyMessage[]
+}
+
+model PatientVisit {
+  id             String    @id @default(uuid())
+  patientId      String
+  patient        Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitNumber    Int       // 1, 2, 3...
+  title          String    // e.g. "Screening Visit", "Baseline Assessment", "Week 4 Follow-up"
+  visitType      String    // "In-Person Clinical Exam", "Follow-up Assessment", "Biomarker Screening"
+  scheduledDate  DateTime
+  scheduledTime  String    @default("10:30 AM")
+  location       String    @default("AIIA Main Campus, New Delhi - OPD Room 204")
+  doctorName     String    @default("Dr. Anand Kumar")
+  status         String    @default("UPCOMING") // "COMPLETED", "UPCOMING", "MISSED", "SCHEDULED"
+  instructions   String?
+  summaryNotes   String?
+  completedDate  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model PatientQuestionnaire {
+  id            String    @id @default(uuid())
+  patientId     String
+  patient       Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title         String    // e.g. "Perceived Stress Scale (PSS-10)", "Agni & Sleep Diary"
+  category      String    // "Stress Assessment", "Digestive Health", "Quality of Life"
+  dueDate       DateTime
+  status        String    @default("PENDING") // "PENDING", "COMPLETED", "OVERDUE"
+  completedAt   DateTime?
+  questionsJson String    // JSON string containing array of questions
+  answersJson   String?   // JSON string containing submitted answers
+  score         Int?
+  feedbackNotes String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model PatientAdherenceLog {
+  id         String   @id @default(uuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  date       DateTime @default(now())
+  status     String   @default("TAKEN") // "TAKEN", "MISSED", "PARTIAL"
+  doseTime   String?  @default("Morning (Pratah)")
+  notes      String?
+  createdAt  DateTime @default(now())
+}
+
+model PatientDocument {
+  id                   String    @id @default(uuid())
+  patientId            String
+  patient              Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title                String    // "Informed Consent Form", "Participant Information Sheet"
+  type                 String    // "CONSENT", "INFORMATION_SHEET", "PROTOCOL_GUIDE", "DIET_CHART"
+  fileUrl              String?
+  consentStatus        String    @default("ACTIVE") // "ACTIVE", "WITHDRAWAL_REQUESTED", "REVOKED"
+  consentDate          DateTime?
+  withdrawalReason     String?
+  withdrawalRequestedAt DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model PatientStudyMessage {
+  id         String   @id @default(uuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  senderRole String   // "PATIENT", "STUDY_TEAM"
+  senderName String   // "Dr. Anand Kumar", "Demo Patient"
+  subject    String?
+  message    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }
 
 model RecruitmentRecord {
@@ -250,3 +337,4 @@ model AIAnalysis {
   recommendations String   // JSON string array of recommended actions
   generatedAt     DateTime @default(now())
 }
+
